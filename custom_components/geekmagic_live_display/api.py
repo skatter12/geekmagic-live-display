@@ -6,7 +6,6 @@ import io
 import textwrap
 
 import aiohttp
-import async_timeout
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 
 from homeassistant.core import HomeAssistant
@@ -48,7 +47,7 @@ class GeekMagicClient:
     async def _async_get_json(self, path: str) -> dict[str, str]:
         """Request JSON from the display."""
         try:
-            async with async_timeout.timeout(10):
+            async with asyncio.timeout(10):
                 async with self._session.get(f"{self._base_url}{path}") as response:
                     response.raise_for_status()
                     data = await response.json(content_type=None)
@@ -62,7 +61,7 @@ class GeekMagicClient:
     async def _async_get(self, path: str, *, params: dict[str, str]) -> None:
         """Send a GET command to the display."""
         try:
-            async with async_timeout.timeout(10):
+            async with asyncio.timeout(10):
                 async with self._session.get(
                     f"{self._base_url}{path}", params=params
                 ) as response:
@@ -75,7 +74,7 @@ class GeekMagicClient:
     ) -> None:
         """Upload content to the display."""
         try:
-            async with async_timeout.timeout(30):
+            async with asyncio.timeout(30):
                 async with self._session.post(
                     f"{self._base_url}{path}", params=params, data=data
                 ) as response:
