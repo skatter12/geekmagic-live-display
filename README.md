@@ -2,7 +2,7 @@
 
 A Home Assistant custom integration for GeekMagic SmallTV-Ultra. It provides
 native controls for the display and renders live Home Assistant data as a
-240×240 JPEG sent through the display's local HTTP API.
+240Ã—240 JPEG sent through the display's local HTTP API.
 
 ## HACS installation
 

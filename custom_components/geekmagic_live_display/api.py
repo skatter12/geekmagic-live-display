@@ -87,6 +87,26 @@ class GeekMagicClient:
         """Reboot the display."""
         await self._async_set(reboot=1)
 
+    async def async_get_storage(self) -> dict[str, int]:
+        """Return total and free storage space in bytes."""
+        data = await self._async_get_json("/space.json")
+        return {key: int(data[key]) for key in ("total", "free")}
+
+    async def async_get_album(self) -> dict[str, int]:
+        """Return the image slideshow settings."""
+        data = await self._async_get_json("/album.json")
+        return {key: int(data[key]) for key in ("autoplay", "i_i")}
+
+    async def async_set_album(
+        self, *, autoplay: int | None = None, interval: int | None = None
+    ) -> None:
+        """Update one or more image slideshow settings."""
+        settings = await self.async_get_album()
+        await self._async_set(
+            autoplay=settings["autoplay"] if autoplay is None else autoplay,
+            i_i=settings["i_i"] if interval is None else interval,
+        )
+
     async def _async_get_json(self, path: str) -> dict[str, str]:
         """Request JSON from the display."""
         try:

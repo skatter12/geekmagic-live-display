@@ -17,6 +17,8 @@ ATTR_TITLE = "title"
 DATA_CLIENTS = "clients"
 DATA_WATCHERS = "watchers"
 
+ATTR_TOTAL_SPACE = "total_space"
+
 DEFAULT_BACKGROUND_COLOR = "#101820"
 DEFAULT_FOREGROUND_COLOR = "#f2aa4c"
 

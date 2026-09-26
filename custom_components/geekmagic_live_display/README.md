@@ -35,7 +35,8 @@ uploads a new `home_assistant_live.jpg` to the SmallTV.
 
 The integration adds a theme selector for all seven SmallTV views, a brightness
 control, night-mode toggle, night-mode start and end hour controls, night-mode
-brightness, and a reboot button.
+brightness, image slideshow toggle and interval, free-space sensor, and a reboot
+button.
 
 ## Easy live views for other devices
 

@@ -23,6 +23,7 @@ async def async_setup_entry(
             GeekMagicNightStartNumber(entry, client),
             GeekMagicNightEndNumber(entry, client),
             GeekMagicNightBrightnessNumber(entry, client),
+            GeekMagicImageIntervalNumber(entry, client),
         ]
     )
 
@@ -126,4 +127,28 @@ class GeekMagicNightBrightnessNumber(_GeekMagicNightNumber):
         """Set the night-mode brightness."""
         self._attr_native_value = int(value)
         await self._client.async_set_night_mode(brightness=int(value))
+        self.async_write_ha_state()
+
+
+class GeekMagicImageIntervalNumber(GeekMagicEntity, NumberEntity):
+    """Represent the photo-album image interval."""
+
+    _attr_name = "Image interval"
+    _attr_native_min_value = 1
+    _attr_native_max_value = 3600
+    _attr_native_step = 1
+    _attr_native_unit_of_measurement = "s"
+
+    def __init__(self, entry: ConfigEntry, client: GeekMagicClient) -> None:
+        """Initialize the image interval."""
+        super().__init__(entry, client, "image_interval")
+
+    async def async_update(self) -> None:
+        """Update the image interval."""
+        self._attr_native_value = (await self._client.async_get_album())["i_i"]
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the image interval."""
+        self._attr_native_value = int(value)
+        await self._client.async_set_album(interval=int(value))
         self.async_write_ha_state()
