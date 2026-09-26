@@ -1,8 +1,8 @@
 # GeekMagic Live Display
 
-A Home Assistant custom integration that shows live entity data on a GeekMagic
-SmallTV-Ultra. The integration renders text to the display's native 240×240
-JPEG format and sends it over the device's local HTTP API.
+A Home Assistant custom integration for GeekMagic SmallTV-Ultra. It provides
+native controls for the display and renders live Home Assistant data as a
+240×240 JPEG sent through the display's local HTTP API.
 
 ## HACS installation
 
@@ -10,25 +10,29 @@ JPEG format and sends it over the device's local HTTP API.
 2. Choose **Custom repositories**.
 3. Add `https://github.com/skatter12/geekmagic-live-display` as category
    **Integration**.
-4. Find and install **GeekMagic Live Display**, then restart Home Assistant.
+4. Install **GeekMagic Live Display**, then restart Home Assistant.
 5. Add **GeekMagic Live Display** in **Settings ? Devices & services** and
    provide the SmallTV's local IP address.
 
-## Using live data
+## Controls
 
-Call `geekmagic_live_display.show` from an automation whenever the state of an
-entity changes. With one configured SmallTV, it is selected automatically:
+The integration adds a selector for every built-in SmallTV theme, brightness,
+night-mode enablement, night-mode start and end hour, night-mode brightness,
+and a reboot button.
+
+## Showing Home Assistant data
+
+Use `geekmagic_live_display.show_entities` to display selected entities once.
+Use `geekmagic_live_display.watch_entities` to automatically refresh the
+screen whenever a selected entity changes:
 
 ```yaml
-service: geekmagic_live_display.show
+service: geekmagic_live_display.watch_entities
 data:
   title: Vaskemaskine
-  message: >
-    Status: {{ states('sensor.washing_machine_status') }}
-    Tid tilbage: {{ states('sensor.washing_machine_remaining_time') }}
-  foreground_color: "#ffffff"
-  background_color: "#16324f"
+  entity_id:
+    - sensor.washing_machine_status
+    - sensor.washing_machine_remaining_time
 ```
 
-When multiple displays are configured, add that integration's `entry_id` to
-the service data.
+See the integration's service descriptions in Home Assistant for all fields.

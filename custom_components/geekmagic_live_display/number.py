@@ -1,0 +1,129 @@
+"""Number entities for GeekMagic display brightness settings."""
+from __future__ import annotations
+
+from homeassistant.components.number import NumberEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .api import GeekMagicClient
+from .entity import GeekMagicEntity
+
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+    """Set up the display brightness controls."""
+    client: GeekMagicClient = hass.data["geekmagic_live_display"]["clients"][
+        entry.entry_id
+    ]
+    async_add_entities(
+        [
+            GeekMagicBrightnessNumber(entry, client),
+            GeekMagicNightStartNumber(entry, client),
+            GeekMagicNightEndNumber(entry, client),
+            GeekMagicNightBrightnessNumber(entry, client),
+        ]
+    )
+
+
+class GeekMagicBrightnessNumber(GeekMagicEntity, NumberEntity):
+    """Represent the SmallTV brightness."""
+
+    _attr_name = "Brightness"
+    _attr_native_min_value = -10
+    _attr_native_max_value = 100
+    _attr_native_step = 1
+
+    def __init__(self, entry: ConfigEntry, client: GeekMagicClient) -> None:
+        """Initialize the brightness number."""
+        super().__init__(entry, client, "brightness")
+
+    async def async_update(self) -> None:
+        """Update the brightness."""
+        self._attr_native_value = await self._client.async_get_brightness()
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the brightness."""
+        self._attr_native_value = int(value)
+        await self._client.async_set_brightness(int(value))
+        self.async_write_ha_state()
+
+
+class _GeekMagicNightNumber(GeekMagicEntity, NumberEntity):
+    """Base class for a night-mode numeric setting."""
+
+    def __init__(
+        self, entry: ConfigEntry, client: GeekMagicClient, suffix: str
+    ) -> None:
+        """Initialize the night-mode number."""
+        super().__init__(entry, client, suffix)
+
+
+class GeekMagicNightStartNumber(_GeekMagicNightNumber):
+    """Represent the night-mode start hour."""
+
+    _attr_name = "Night mode start hour"
+    _attr_native_min_value = 0
+    _attr_native_max_value = 23
+    _attr_native_step = 1
+
+    def __init__(self, entry: ConfigEntry, client: GeekMagicClient) -> None:
+        """Initialize the night-mode start hour."""
+        super().__init__(entry, client, "night_start")
+
+    async def async_update(self) -> None:
+        """Update the night-mode start hour."""
+        self._attr_native_value = (await self._client.async_get_night_mode())["t1"]
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the night-mode start hour."""
+        self._attr_native_value = int(value)
+        await self._client.async_set_night_mode(start_hour=int(value))
+        self.async_write_ha_state()
+
+
+class GeekMagicNightEndNumber(_GeekMagicNightNumber):
+    """Represent the night-mode end hour."""
+
+    _attr_name = "Night mode end hour"
+    _attr_native_min_value = 0
+    _attr_native_max_value = 23
+    _attr_native_step = 1
+
+    def __init__(self, entry: ConfigEntry, client: GeekMagicClient) -> None:
+        """Initialize the night-mode end hour."""
+        super().__init__(entry, client, "night_end")
+
+    async def async_update(self) -> None:
+        """Update the night-mode end hour."""
+        self._attr_native_value = (await self._client.async_get_night_mode())["t2"]
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the night-mode end hour."""
+        self._attr_native_value = int(value)
+        await self._client.async_set_night_mode(end_hour=int(value))
+        self.async_write_ha_state()
+
+
+class GeekMagicNightBrightnessNumber(_GeekMagicNightNumber):
+    """Represent the brightness used in night mode."""
+
+    _attr_name = "Night mode brightness"
+    _attr_native_min_value = -10
+    _attr_native_max_value = 100
+    _attr_native_step = 1
+
+    def __init__(self, entry: ConfigEntry, client: GeekMagicClient) -> None:
+        """Initialize the night-mode brightness."""
+        super().__init__(entry, client, "night_brightness")
+
+    async def async_update(self) -> None:
+        """Update the night-mode brightness."""
+        self._attr_native_value = (await self._client.async_get_night_mode())["b2"]
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the night-mode brightness."""
+        self._attr_native_value = int(value)
+        await self._client.async_set_night_mode(brightness=int(value))
+        self.async_write_ha_state()

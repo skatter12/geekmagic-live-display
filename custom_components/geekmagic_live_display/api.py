@@ -44,6 +44,49 @@ class GeekMagicClient:
         await self._async_post("/doUpload", params={"dir": "/image/"}, data=data)
         await self._async_get("/set", params={"img": LIVE_IMAGE_NAME})
 
+    async def async_get_theme(self) -> str:
+        """Return the currently selected theme."""
+        return str((await self._async_get_json("/app.json")).get("theme", "3"))
+
+    async def async_set_theme(self, theme: str) -> None:
+        """Select a built-in display theme."""
+        await self._async_set(theme=theme)
+
+    async def async_get_brightness(self) -> int:
+        """Return the current display brightness."""
+        return int((await self._async_get_json("/brt.json"))["brt"])
+
+    async def async_set_brightness(self, brightness: int) -> None:
+        """Set the display brightness."""
+        await self._async_set(brt=brightness)
+
+    async def async_get_night_mode(self) -> dict[str, int]:
+        """Return the night-mode settings."""
+        data = await self._async_get_json("/timebrt.json")
+        return {key: int(data[key]) for key in ("en", "t1", "t2", "b2")}
+
+    async def async_set_night_mode(
+        self,
+        *,
+        enabled: int | None = None,
+        start_hour: int | None = None,
+        end_hour: int | None = None,
+        brightness: int | None = None,
+    ) -> None:
+        """Update one or more night-mode settings."""
+        settings = await self.async_get_night_mode()
+        await self._async_set(
+            en=settings["en"] if enabled is None else enabled,
+            t1=settings["t1"] if start_hour is None else start_hour,
+            t2=settings["t2"] if end_hour is None else end_hour,
+            b1=50,
+            b2=settings["b2"] if brightness is None else brightness,
+        )
+
+    async def async_reboot(self) -> None:
+        """Reboot the display."""
+        await self._async_set(reboot=1)
+
     async def _async_get_json(self, path: str) -> dict[str, str]:
         """Request JSON from the display."""
         try:
@@ -58,7 +101,13 @@ class GeekMagicClient:
             raise GeekMagicError(f"Unexpected response from {path}")
         return data
 
-    async def _async_get(self, path: str, *, params: dict[str, str]) -> None:
+    async def _async_set(self, **params: str | int) -> None:
+        """Send settings to the display."""
+        await self._async_get("/set", params=params)
+
+    async def _async_get(
+        self, path: str, *, params: dict[str, str | int]
+    ) -> None:
         """Send a GET command to the display."""
         try:
             async with asyncio.timeout(10):
@@ -70,7 +119,7 @@ class GeekMagicClient:
             raise GeekMagicError(str(err)) from err
 
     async def _async_post(
-        self, path: str, *, params: dict[str, str], data: aiohttp.FormData
+        self, path: str, *, params: dict[str, str | int], data: aiohttp.FormData
     ) -> None:
         """Upload content to the display."""
         try:

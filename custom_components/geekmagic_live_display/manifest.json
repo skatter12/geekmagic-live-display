@@ -2,8 +2,8 @@
   "domain": "geekmagic_live_display",
   "name": "GeekMagic Live Display",
   "config_flow": true,
-  "documentation": "https://github.com/skatter12/geekmagic-live-display",
-  "version": "1.0.1",
+  "documentation": "https://github.com/skatter12/core/tree/skatter12-geekmagic-tv-addon/homeassistant/components/geekmagic_live_display",
+  "version": "1.1.0",
   "codeowners": [],
   "iot_class": "local_push"
 }

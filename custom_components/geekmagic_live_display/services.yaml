@@ -33,3 +33,80 @@ show:
       example: "#101820"
       selector:
         text:
+show_entities:
+  name: Show entities
+  description: Render the current state of one or more Home Assistant entities.
+  fields:
+    entry_id:
+      name: Display
+      description: The configuration-entry ID when more than one GeekMagic display is configured.
+      selector:
+        text:
+    entity_id:
+      name: Entities
+      description: Entities whose friendly name, state, and unit should be shown.
+      required: true
+      selector:
+        entity:
+          multiple: true
+    title:
+      name: Title
+      description: Heading rendered at the top of the display.
+      example: Hjem
+      selector:
+        text:
+    foreground_color:
+      name: Text color
+      description: A CSS color for the text.
+      example: "#f2aa4c"
+      selector:
+        text:
+    background_color:
+      name: Background color
+      description: A CSS color for the background.
+      example: "#101820"
+      selector:
+        text:
+watch_entities:
+  name: Watch entities
+  description: Show entities now and refresh the display automatically when their state changes.
+  fields:
+    entry_id:
+      name: Display
+      description: The configuration-entry ID when more than one GeekMagic display is configured.
+      selector:
+        text:
+    entity_id:
+      name: Entities
+      description: Entities whose friendly name, state, and unit should be kept on the display.
+      required: true
+      selector:
+        entity:
+          multiple: true
+    title:
+      name: Title
+      description: Heading rendered at the top of the display.
+      example: Vaskemaskine
+      selector:
+        text:
+    foreground_color:
+      name: Text color
+      description: A CSS color for the text.
+      example: "#ffffff"
+      selector:
+        text:
+    background_color:
+      name: Background color
+      description: A CSS color for the background.
+      example: "#16324f"
+      selector:
+        text:
+stop_watching:
+  name: Stop watching entities
+  description: Stop automatic updates started by watch entities.
+  fields:
+    entry_id:
+      name: Display
+      description: The configuration-entry ID when more than one GeekMagic display is configured.
+      selector:
+        text:
