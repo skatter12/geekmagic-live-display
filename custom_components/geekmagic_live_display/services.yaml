@@ -1,0 +1,35 @@
+show:
+  name: Show live data
+  description: Render text as an image and display it on a GeekMagic SmallTV.
+  fields:
+    entry_id:
+      name: Display
+      description: The configuration-entry ID when more than one GeekMagic display is configured.
+      selector:
+        text:
+    title:
+      name: Title
+      description: Heading rendered at the top of the display.
+      example: Vaskemaskine
+      selector:
+        text:
+    message:
+      name: Message
+      description: The live data to render. Home Assistant templates are supported.
+      required: true
+      example: "{{ states('sensor.washing_machine_status') }}"
+      selector:
+        text:
+          multiline: true
+    foreground_color:
+      name: Text color
+      description: A CSS color for the text.
+      example: "#f2aa4c"
+      selector:
+        text:
+    background_color:
+      name: Background color
+      description: A CSS color for the background.
+      example: "#101820"
+      selector:
+        text:

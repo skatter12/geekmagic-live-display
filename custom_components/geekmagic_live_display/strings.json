@@ -1,0 +1,16 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "GeekMagic Live Display",
+        "description": "Enter the local IP address or hostname of the SmallTV."
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the GeekMagic SmallTV."
+    },
+    "abort": {
+      "already_configured": "This GeekMagic SmallTV is already configured."
+    }
+  }
+}
