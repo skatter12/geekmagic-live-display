@@ -1,30 +1,60 @@
 # GeekMagic Live Display
 
-A Home Assistant custom integration for GeekMagic SmallTV-Ultra. It provides
-native controls for the display and renders live Home Assistant data as a
-240×240 JPEG sent through the display's local HTTP API.
+Turn a GeekMagic SmallTV-Ultra into a compact Home Assistant status display.
+This integration controls the display over its local HTTP API and can show live
+states from any Home Assistant entity as a 240×240 image.
 
-## HACS installation
+## Features
+
+- Select all seven built-in SmallTV themes: weather clocks, forecast, photo
+  album, clock styles, and simple weather clock.
+- Control brightness, night mode, night-mode schedule, and night brightness.
+- Control photo-album autoplay and image interval.
+- Monitor remaining SmallTV storage with a diagnostic free-space sensor.
+- Reboot the display from Home Assistant.
+- Render custom text with `geekmagic_live_display.show`.
+- Display one or more entity states with
+  `geekmagic_live_display.show_entities`.
+- Keep the display automatically synchronized with selected entities through
+  `geekmagic_live_display.watch_entities`.
+
+## Installation
+
+### HACS
 
 1. In HACS, open **Integrations** and select the three-dot menu.
-2. Choose **Custom repositories**.
-3. Add `https://github.com/skatter12/geekmagic-live-display` as category
+2. Select **Custom repositories**.
+3. Add `https://github.com/skatter12/geekmagic-live-display` with category
    **Integration**.
-4. Install **GeekMagic Live Display**, then restart Home Assistant.
-5. Add **GeekMagic Live Display** in **Settings ? Devices & services** and
-   provide the SmallTV's local IP address.
+4. Install **GeekMagic Live Display**, restart Home Assistant, and add it from
+   **Settings → Devices & services**.
 
-## Controls
+### Manual
 
-The integration adds a selector for every built-in SmallTV theme, brightness,
-night-mode enablement, night-mode start and end hour, night-mode brightness,
-and a reboot button.
+Copy this directory to
+`config/custom_components/geekmagic_live_display`, restart Home Assistant, then
+add **GeekMagic Live Display** from **Settings → Devices & services**. Enter the
+display's local IP address.
 
-## Showing Home Assistant data
+## Examples
 
-Use `geekmagic_live_display.show_entities` to display selected entities once.
-Use `geekmagic_live_display.watch_entities` to automatically refresh the
-screen whenever a selected entity changes:
+The services select the only configured display automatically. Add `entry_id`
+when more than one display is configured.
+
+### Custom text
+
+```yaml
+service: geekmagic_live_display.show
+data:
+  title: Vaskemaskine
+  message: >
+    Status: {{ states('sensor.washing_machine_status') }}
+    Tid tilbage: {{ states('sensor.washing_machine_remaining_time') }}
+  foreground_color: "#ffffff"
+  background_color: "#16324f"
+```
+
+### Automatically updated entity view
 
 ```yaml
 service: geekmagic_live_display.watch_entities
@@ -35,4 +65,6 @@ data:
     - sensor.washing_machine_remaining_time
 ```
 
-See the integration's service descriptions in Home Assistant for all fields.
+Call `geekmagic_live_display.stop_watching` to stop automatic updates. Starting
+a new `show`, `show_entities`, or `watch_entities` service call replaces the
+previous watcher for that display.

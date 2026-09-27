@@ -1,21 +1,47 @@
 # GeekMagic Live Display
 
-This custom integration sends live Home Assistant data to a GeekMagic
-SmallTV-Ultra. It renders a 240×240 JPEG, uploads it to the device, and selects
-the photo-album theme.
+Turn a GeekMagic SmallTV-Ultra into a compact Home Assistant status display.
+This integration controls the display over its local HTTP API and can show live
+states from any Home Assistant entity as a 240×240 image.
+
+## Features
+
+- Select all seven built-in SmallTV themes: weather clocks, forecast, photo
+  album, clock styles, and simple weather clock.
+- Control brightness, night mode, night-mode schedule, and night brightness.
+- Control photo-album autoplay and image interval.
+- Monitor remaining SmallTV storage with a diagnostic free-space sensor.
+- Reboot the display from Home Assistant.
+- Render custom text with `geekmagic_live_display.show`.
+- Display one or more entity states with
+  `geekmagic_live_display.show_entities`.
+- Keep the display automatically synchronized with selected entities through
+  `geekmagic_live_display.watch_entities`.
 
 ## Installation
 
-Copy this `geekmagic_live_display` directory to
+### HACS
+
+1. In HACS, open **Integrations** and select the three-dot menu.
+2. Select **Custom repositories**.
+3. Add `https://github.com/skatter12/geekmagic-live-display` with category
+   **Integration**.
+4. Install **GeekMagic Live Display**, restart Home Assistant, and add it from
+   **Settings → Devices & services**.
+
+### Manual
+
+Copy this directory to
 `config/custom_components/geekmagic_live_display`, restart Home Assistant, then
 add **GeekMagic Live Display** from **Settings → Devices & services**. Enter the
 display's local IP address.
 
-## Automation example
+## Examples
 
-The service automatically selects the display when only one is configured. Add
-`entry_id` only when multiple displays are configured. The service data supports
-normal Home Assistant templates:
+The services select the only configured display automatically. Add `entry_id`
+when more than one display is configured.
+
+### Custom text
 
 ```yaml
 service: geekmagic_live_display.show
@@ -28,22 +54,7 @@ data:
   background_color: "#16324f"
 ```
 
-Trigger the automation on the relevant washing-machine entities. Each trigger
-uploads a new `home_assistant_live.jpg` to the SmallTV.
-
-## Built-in controls
-
-The integration adds a theme selector for all seven SmallTV views, a brightness
-control, night-mode toggle, night-mode start and end hour controls, night-mode
-brightness, image slideshow toggle and interval, free-space sensor, and a reboot
-button.
-
-## Easy live views for other devices
-
-Use `geekmagic_live_display.show_entities` to render the friendly name, current
-state, and unit of one or more entities once. Use
-`geekmagic_live_display.watch_entities` to do the same and automatically refresh
-the display whenever any selected entity changes:
+### Automatically updated entity view
 
 ```yaml
 service: geekmagic_live_display.watch_entities
