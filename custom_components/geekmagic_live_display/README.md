@@ -6,6 +6,16 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.4.0
+
+- **New script blueprint**, so a display view can be set up from the UI instead
+  of hand-writing a service call. Choose a title, how many lines the display
+  should use (1 to 5), which entities fill the lines, and whether the values
+  keep updating automatically. An automation then only has to call
+  `script.turn_on` for the created script.
+- The blueprint skips entity fields you left empty, so the lines you fill in are
+  used in the order you picked them, no matter which field they sit in.
+
 ### 1.3.11
 
 - Only the state itself is uppercased now; the unit keeps its original case.
@@ -150,6 +160,46 @@ data:
 Call `geekmagic_live_display.stop_watching` to stop automatic updates. Starting
 a new `show`, `show_entities`, or `watch_entities` service call replaces the
 previous watcher for that display.
+
+## Script blueprint
+
+The fastest way to get a display view into an automation is the **GeekMagic
+Live Display** script blueprint.
+
+1. Go to **Settings → Automations & scenes → Scripts**.
+2. Select **Create script → Create from blueprint → GeekMagic Live Display**.
+3. Fill in the fields and save. Home Assistant creates a script you can call
+   from any automation.
+
+The blueprint fields:
+
+| Field | Purpose |
+| --- | --- |
+| **Titel** | Heading on the first line. May be left empty. |
+| **Antal linier** | Total lines the display should use, 1 to 5. The title counts as one line. |
+| **Linje 2 – Linje 5** | Entity whose value fills that line. Empty fields are skipped. |
+| **Opdater automatisk** | On: the display follows the values and redraws when they change. Off: a single image each time the script runs. |
+| **Tekstfarve** / **Baggrundsfarve** | Display colors. |
+
+Because the first line is the title, *Antal linier* 3 leaves room for two
+entities. Empty **Linje** fields are skipped, so filling the last fields first
+works just as well as filling them top down.
+
+With a one-line display and no entity to show, the clock is displayed instead.
+
+Using it from an automation:
+
+```yaml
+action: script.turn_on
+target:
+  entity_id: script.display_bil
+```
+
+The blueprint is also shipped in this repository under
+`blueprints/script/geekmagic_live_display/display.yaml`. If it does not appear
+under **Create from blueprint** after installing, copy that file to
+`config/blueprints/script/geekmagic_live_display/display.yaml` and reload the
+page.
 
 ## Night mode
 

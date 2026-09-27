@@ -1,0 +1,110 @@
+blueprint:
+  name: GeekMagic Live Display
+  description: >-
+    Vis en overskrift og en til fire værdier på GeekMagic SmallTV-displayet.
+    Skærmen deles i lige store linjer, og bogstaverne skaleres så teksten
+    fylder displayet. Kan bruges både til konstant overvågning og til et
+    enkelt billede fra en automation.
+  domain: script
+  input:
+    title:
+      name: Titel
+      description: Overskriften på den øverste linje. Kan være tom.
+      default: ""
+      selector:
+        text:
+    line_count:
+      name: Antal linier
+      description: >-
+        Hvor mange linier displayet skal vise, 1 til 5. Titlen tælles med,
+        så der skal være en enhed valgt for hver linje under titlen.
+      default: "3"
+      selector:
+        select:
+          custom_value: false
+          options:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+    data_1:
+      name: Linje 2
+      description: Værdien på den anden linje.
+      default: []
+      selector:
+        entity:
+    data_2:
+      name: Linje 3
+      description: Værdien på den tredje linje.
+      default: []
+      selector:
+        entity:
+    data_3:
+      name: Linje 4
+      description: Værdien på den fjerde linje.
+      default: []
+      selector:
+        entity:
+    data_4:
+      name: Linje 5
+      description: Værdien på den femte linje.
+      default: []
+      selector:
+        entity:
+    keep_watching:
+      name: Opdater automatisk
+      description: >-
+        Ja: displayet følger værdierne og opdaterer sig, når de ændrer sig.
+        Nej: kun ét billede, hver gang scriptet køres.
+      default: true
+      selector:
+        boolean:
+    foreground_color:
+      name: Tekstfarve
+      default: "#ffffff"
+      selector:
+        text:
+    background_color:
+      name: Baggrundsfarve
+      default: "#16324f"
+      selector:
+        text:
+
+mode: single
+
+sequence:
+  - variables:
+      heading: "{{ title | trim }}"
+      # Antal datalinjer: linjetallet minus titlen, aldrig under nul.
+      data_budget: "{{ [line_count | int - 1, 0] | max }}"
+      # Spring tomme felter over, så rækkefølgen på valgene er ligegyldig.
+      picked_data: >-
+        {{ [data_1, data_2, data_3, data_4] | reject('eq', []) | reject('eq', none) | list }}
+      # Listeadskæring bruges frem for slice-filteret, fordi slice() i
+      # Home Assistants Jinja fejler med division by zero ved nul.
+      chosen_data: "{{ picked_data[:data_budget | int] }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ chosen_data | count > 0 }}"
+        sequence:
+          # entity_id er et felt i tjenestens egen skema, ikke et target,
+          # derfor skal det sendes i data.
+          - action: >-
+              {{ 'geekmagic_live_display.watch_entities'
+                 if keep_watching
+                 else 'geekmagic_live_display.show_entities' }}
+            data:
+              title: "{{ heading }}"
+              entity_id: "{{ chosen_data }}"
+              foreground_color: "{{ foreground_color }}"
+              background_color: "{{ background_color }}"
+    # Uden valgte enheder, for eksempel linjetal 1, vises klokkeslættet.
+    default:
+      - action: geekmagic_live_display.show
+        data:
+          title: "{{ heading }}"
+          message: "{{ now().strftime('%H:%M') }}"
+          foreground_color: "{{ foreground_color }}"
+          background_color: "{{ background_color }}"
