@@ -6,6 +6,13 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.4.1
+
+- **Fix the script blueprint failing on every call.** The inputs were read as
+  plain variable names, and those names do not exist inside a script, so each
+  run ended with `UndefinedError: 'line_count' is undefined`. Inputs are now
+  pulled in with `!input` and the line selection is resolved up front.
+
 ### 1.4.0
 
 - **New script blueprint**, so a display view can be set up from the UI instead

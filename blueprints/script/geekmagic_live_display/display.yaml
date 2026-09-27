@@ -73,17 +73,27 @@ blueprint:
 
 mode: single
 
+# Inputs skal hentes med !input. Et variables-step i sequence kan ikke se
+# input-navnene, så de lægges ind her og bruges videre nedenfor.
+variables:
+  heading: !input title
+  line_total: !input line_count
+  pick_1: !input data_1
+  pick_2: !input data_2
+  pick_3: !input data_3
+  pick_4: !input data_4
+  watch: !input keep_watching
+  text_color: !input foreground_color
+  back_color: !input background_color
+  # Spring tomme felter over, så rækkefølgen på valgene er ligegyldig.
+  filled_data: >-
+    {{ [pick_1, pick_2, pick_3, pick_4] | reject('eq', []) | reject('eq', none) | list }}
+  # Listeadskæring bruges frem for slice-filteret, fordi slice() i
+  # Home Assistants Jinja fejler med division by zero ved nul.
+  chosen_data: >-
+    {{ filled_data[:[line_total | int - 1, 0] | max] }}
+
 sequence:
-  - variables:
-      heading: "{{ title | trim }}"
-      # Antal datalinjer: linjetallet minus titlen, aldrig under nul.
-      data_budget: "{{ [line_count | int - 1, 0] | max }}"
-      # Spring tomme felter over, så rækkefølgen på valgene er ligegyldig.
-      picked_data: >-
-        {{ [data_1, data_2, data_3, data_4] | reject('eq', []) | reject('eq', none) | list }}
-      # Listeadskæring bruges frem for slice-filteret, fordi slice() i
-      # Home Assistants Jinja fejler med division by zero ved nul.
-      chosen_data: "{{ picked_data[:data_budget | int] }}"
   - choose:
       - conditions:
           - condition: template
@@ -93,18 +103,18 @@ sequence:
           # derfor skal det sendes i data.
           - action: >-
               {{ 'geekmagic_live_display.watch_entities'
-                 if keep_watching
+                 if watch
                  else 'geekmagic_live_display.show_entities' }}
             data:
-              title: "{{ heading }}"
+              title: "{{ heading | trim }}"
               entity_id: "{{ chosen_data }}"
-              foreground_color: "{{ foreground_color }}"
-              background_color: "{{ background_color }}"
+              foreground_color: "{{ text_color }}"
+              background_color: "{{ back_color }}"
     # Uden valgte enheder, for eksempel linjetal 1, vises klokkeslættet.
     default:
       - action: geekmagic_live_display.show
         data:
-          title: "{{ heading }}"
+          title: "{{ heading | trim }}"
           message: "{{ now().strftime('%H:%M') }}"
-          foreground_color: "{{ foreground_color }}"
-          background_color: "{{ background_color }}"
+          foreground_color: "{{ text_color }}"
+          background_color: "{{ back_color }}"
