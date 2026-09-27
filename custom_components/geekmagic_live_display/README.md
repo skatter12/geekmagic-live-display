@@ -6,6 +6,13 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.7
+
+- Fix the live-data text staying tiny. The bundled font was not found, so
+  Pillow fell back to a small bitmap font that ignores the requested size.
+  Load DejaVuSans from its system path and increase the sizes to 40px title
+  and 30px message.
+
 ### 1.3.6
 
 - Make the live-data text larger and easier to read on the 240×240 display.

@@ -234,17 +234,17 @@ def render_display(
 
     image = Image.new("RGB", (DISPLAY_SIZE, DISPLAY_SIZE), background)
     draw = ImageDraw.Draw(image)
-    title_font = _get_font(34)
-    message_font = _get_font(26)
+    title_font = _get_font(40)
+    message_font = _get_font(30)
 
-    _draw_centered(draw, title, 14, title_font, foreground)
-    draw.line((16, 54, DISPLAY_SIZE - 16, 54), fill=foreground, width=2)
+    _draw_centered(draw, title, 12, title_font, foreground)
+    draw.line((16, 58, DISPLAY_SIZE - 16, 58), fill=foreground, width=2)
 
-    y_position = 74
-    for line in _wrap_text(draw, message, message_font, DISPLAY_SIZE - 20):
+    y_position = 78
+    for line in _wrap_text(draw, message, message_font, DISPLAY_SIZE - 16):
         _draw_centered(draw, line, y_position, message_font, foreground)
-        y_position += 36
-        if y_position > DISPLAY_SIZE - 16:
+        y_position += 40
+        if y_position > DISPLAY_SIZE - 14:
             break
 
     output = io.BytesIO()
@@ -254,10 +254,17 @@ def render_display(
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Use a scalable font when Pillow can locate it."""
-    try:
-        return ImageFont.truetype("DejaVuSans.ttf", size)
-    except OSError:
-        return ImageFont.load_default()
+    for candidate in (
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/TTF/DejaVuSans.ttf",
+        "DejaVuSans.ttf",
+    ):
+        try:
+            return ImageFont.truetype(candidate, size)
+        except OSError:
+            continue
+    return ImageFont.load_default()
 
 
 def _wrap_text(
