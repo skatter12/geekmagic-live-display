@@ -18,12 +18,13 @@ async def async_setup_entry(
     client: GeekMagicClient = hass.data["geekmagic_live_display"]["clients"][
         entry.entry_id
     ]
-    async_add_entities([GeekMagicThemeSelect(entry, client)])
     async_add_entities(
         [
+            GeekMagicThemeSelect(entry, client),
             GeekMagicImageSelect(entry, client),
             GeekMagicSmallImageSelect(entry, client),
-        ]
+        ],
+        update_before_add=True,
     )
 
 
