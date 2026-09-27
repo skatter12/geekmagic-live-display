@@ -6,6 +6,11 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.6
+
+- Make the live-data text larger and easier to read on the 240×240 display.
+  Title is now 34px and message text 26px (previously 22px and 16px).
+
 ### 1.3.5
 
 - Fix the live-data image not being selected after upload. The display

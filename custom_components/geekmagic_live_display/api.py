@@ -234,17 +234,17 @@ def render_display(
 
     image = Image.new("RGB", (DISPLAY_SIZE, DISPLAY_SIZE), background)
     draw = ImageDraw.Draw(image)
-    title_font = _get_font(22)
-    message_font = _get_font(16)
+    title_font = _get_font(34)
+    message_font = _get_font(26)
 
     _draw_centered(draw, title, 14, title_font, foreground)
-    draw.line((16, 48, DISPLAY_SIZE - 16, 48), fill=foreground, width=1)
+    draw.line((16, 54, DISPLAY_SIZE - 16, 54), fill=foreground, width=2)
 
-    y_position = 64
-    for line in _wrap_text(draw, message, message_font, DISPLAY_SIZE - 32):
+    y_position = 74
+    for line in _wrap_text(draw, message, message_font, DISPLAY_SIZE - 20):
         _draw_centered(draw, line, y_position, message_font, foreground)
-        y_position += 24
-        if y_position > DISPLAY_SIZE - 28:
+        y_position += 36
+        if y_position > DISPLAY_SIZE - 16:
             break
 
     output = io.BytesIO()
@@ -266,7 +266,7 @@ def _wrap_text(
     """Wrap text to fit the display width while preserving explicit line breaks."""
     lines: list[str] = []
     for paragraph in text.splitlines() or [""]:
-        words = textwrap.wrap(paragraph, width=28, break_long_words=True) or [""]
+        words = textwrap.wrap(paragraph, width=18, break_long_words=True) or [""]
         for line in words:
             while draw.textbbox((0, 0), line, font=font)[2] > width and len(line) > 1:
                 line = line[:-1]
