@@ -6,7 +6,7 @@ import logging
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_FRIENDLY_NAME, ATTR_UNIT_OF_MEASUREMENT, Platform
+from homeassistant.const import ATTR_UNIT_OF_MEASUREMENT, Platform
 from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_track_state_change_event
@@ -76,16 +76,19 @@ def _get_client(
 
 
 def _format_entity_states(hass: HomeAssistant, entity_ids: list[str]) -> str:
-    """Format current entity states for the constrained display."""
+    """Format entity states as bare values, one per line.
+
+    The display renders the title in the top band and this value in the
+    middle band, so the entity name is intentionally left out.
+    """
     lines = []
     for entity_id in entity_ids:
         state = hass.states.get(entity_id)
         if state is None:
-            lines.append(f"{entity_id}: unavailable")
+            lines.append("-")
             continue
-        name = state.attributes.get(ATTR_FRIENDLY_NAME, entity_id)
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT, "")
-        lines.append(f"{name}: {state.state}{unit and f' {unit}'}")
+        lines.append(f"{state.state}{unit and f' {unit}'}")
     return "\n".join(lines)
 
 

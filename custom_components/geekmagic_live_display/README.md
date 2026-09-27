@@ -6,6 +6,15 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.8
+
+- Redesign the live-data screen as three equal bands, one line of text each:
+  the title on top, the entity value in the middle and the current time at
+  the bottom. Each line is centered in its band and the font is sized
+  automatically so the text fills a third of the 240×240 display.
+- `watch_entities` / `show_entities` no longer prefix the value with the
+  entity name, so the middle band shows just the value (for example `33`).
+
 ### 1.3.7
 
 - Fix the live-data text staying tiny. The bundled font was not found, so

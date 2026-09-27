@@ -4,10 +4,10 @@ from __future__ import annotations
 import asyncio
 import io
 import re
-import textwrap
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime
 
 import aiohttp
 from PIL import Image, ImageColor, ImageDraw, ImageFont
@@ -225,7 +225,12 @@ class GeekMagicClient:
 def render_display(
     title: str, message: str, foreground_color: str, background_color: str
 ) -> bytes:
-    """Render a title and message as the 240x240 JPEG required by the display."""
+    """Render the display as three stacked bands.
+
+    The top band shows the title, the middle band the message and the bottom
+    band the current time. Each band gets a third of the screen and its own
+    automatically sized font, so the text always fills its band.
+    """
     try:
         foreground = ImageColor.getrgb(foreground_color)
         background = ImageColor.getrgb(background_color)
@@ -234,22 +239,44 @@ def render_display(
 
     image = Image.new("RGB", (DISPLAY_SIZE, DISPLAY_SIZE), background)
     draw = ImageDraw.Draw(image)
-    title_font = _get_font(40)
-    message_font = _get_font(30)
+    band_height = DISPLAY_SIZE // 3
 
-    _draw_centered(draw, title, 12, title_font, foreground)
-    draw.line((16, 58, DISPLAY_SIZE - 16, 58), fill=foreground, width=2)
-
-    y_position = 78
-    for line in _wrap_text(draw, message, message_font, DISPLAY_SIZE - 16):
-        _draw_centered(draw, line, y_position, message_font, foreground)
-        y_position += 40
-        if y_position > DISPLAY_SIZE - 14:
-            break
+    for index, text in enumerate(
+        (title, _first_line(message), datetime.now().strftime("%H:%M"))
+    ):
+        top = index * band_height
+        font = _fit_font(draw, text, DISPLAY_SIZE - 8, band_height - 8, band_height)
+        _draw_centered(draw, text, top, band_height, font, foreground)
 
     output = io.BytesIO()
     image.save(output, format="JPEG", quality=90, optimize=True)
     return output.getvalue()
+
+
+def _first_line(text: str) -> str:
+    """Return the first non-empty line of a message."""
+    for line in text.splitlines():
+        if line.strip():
+            return line.strip()
+    return ""
+
+
+def _fit_font(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    max_width: int,
+    max_height: int,
+    max_size: int,
+) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    """Return the largest font size where the text fits in the given space."""
+    for size in range(max_size, 5, -1):
+        font = _get_font(size)
+        bounding_box = draw.textbbox((0, 0), text, font=font)
+        if bounding_box[2] - bounding_box[0] <= max_width and (
+            bounding_box[3] - bounding_box[1]
+        ) <= max_height:
+            return font
+    return _get_font(6)
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -267,28 +294,16 @@ def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def _wrap_text(
-    draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, width: int
-) -> list[str]:
-    """Wrap text to fit the display width while preserving explicit line breaks."""
-    lines: list[str] = []
-    for paragraph in text.splitlines() or [""]:
-        words = textwrap.wrap(paragraph, width=18, break_long_words=True) or [""]
-        for line in words:
-            while draw.textbbox((0, 0), line, font=font)[2] > width and len(line) > 1:
-                line = line[:-1]
-            lines.append(line)
-    return lines
-
-
 def _draw_centered(
     draw: ImageDraw.ImageDraw,
     text: str,
-    y_position: int,
+    top: int,
+    band_height: int,
     font: ImageFont.ImageFont,
     color: tuple[int, int, int],
 ) -> None:
-    """Draw text centered horizontally."""
-    bounding_box = draw.textbbox((0, 0), text, font=font)
-    x_position = (DISPLAY_SIZE - (bounding_box[2] - bounding_box[0])) // 2
+    """Draw text centered both horizontally and vertically inside one band."""
+    left, upper, right, lower = draw.textbbox((0, 0), text, font=font)
+    x_position = (DISPLAY_SIZE - (right - left)) // 2 - left
+    y_position = top + (band_height - (lower - upper)) // 2 - upper
     draw.text((x_position, y_position), text, font=font, fill=color)
