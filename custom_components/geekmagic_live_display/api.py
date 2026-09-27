@@ -5,6 +5,9 @@ import asyncio
 import io
 import re
 import textwrap
+import urllib.error
+import urllib.parse
+import urllib.request
 
 import aiohttp
 from PIL import Image, ImageColor, ImageDraw, ImageFont
@@ -19,11 +22,22 @@ class GeekMagicError(Exception):
     """Raised when the display cannot be updated."""
 
 
+def _fetch_text(url: str) -> str:
+    """Request text from the display, tolerating its malformed headers.
+
+    Blocking urllib is used because the display's /filelist endpoint sends a
+    duplicated Content-Length header, which aiohttp rejects.
+    """
+    with urllib.request.urlopen(url, timeout=10) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+
 class GeekMagicClient:
     """Communicate with a GeekMagic SmallTV-Ultra."""
 
     def __init__(self, hass: HomeAssistant, host: str) -> None:
         """Initialize the client."""
+        self._hass = hass
         self._session = async_get_clientsession(hass)
         self._base_url = f"http://{host}"
 
@@ -166,8 +180,14 @@ class GeekMagicClient:
                 ) as response:
                     response.raise_for_status()
                     return await response.text()
-        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
-            raise GeekMagicError(str(err)) from err
+        except (asyncio.TimeoutError, aiohttp.ClientError):
+            # The display sends a duplicated Content-Length header on /filelist,
+            # which aiohttp rejects. Retry with urllib, which tolerates it.
+            url = f"{self._base_url}{path}?{urllib.parse.urlencode(params)}"
+            try:
+                return await self._hass.async_add_executor_job(_fetch_text, url)
+            except (TimeoutError, urllib.error.URLError) as err:
+                raise GeekMagicError(str(err)) from err
 
     async def _async_post(
         self, path: str, *, params: dict[str, str | int], data: aiohttp.FormData
