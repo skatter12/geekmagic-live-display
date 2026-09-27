@@ -4,6 +4,20 @@ Turn a GeekMagic SmallTV-Ultra into a compact Home Assistant status display.
 This integration controls the display over its local HTTP API and can show live
 states from any Home Assistant entity as a 240×240 image.
 
+## Changelog
+
+### 1.3.2
+
+- Fix the **Image** and **Small image** selectors staying empty and
+  unavailable. The display's `/filelist` endpoint sends a duplicated
+  `Content-Length` header, which aiohttp rejects. The file list is now fetched
+  with aiohttp first and falls back to `urllib` when aiohttp rejects the
+  response.
+
+### 1.3.1
+
+- Current release.
+
 ## Features
 
 - Select all seven built-in SmallTV themes: weather clocks, forecast, photo
