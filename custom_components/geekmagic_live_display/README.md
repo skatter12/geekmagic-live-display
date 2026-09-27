@@ -6,6 +6,12 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.5
+
+- Fix the live-data image not being selected after upload. The display
+  expects the full path (`/image/home_assistant_live.jpg`), but only the
+  filename was sent, so the previous image stayed on screen.
+
 ### 1.3.4
 
 - Fix the live-data services (`show`, `show_entities`, `watch_entities`)

@@ -83,7 +83,7 @@ class GeekMagicClient:
             image,
             {"dir": "/image/"},
         )
-        await self._async_get("/set", params={"img": LIVE_IMAGE_NAME})
+        await self._async_get("/set", params={"img": f"/image/{LIVE_IMAGE_NAME}"})
 
     async def async_get_theme(self) -> str:
         """Return the currently selected theme."""
