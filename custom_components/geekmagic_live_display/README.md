@@ -6,6 +6,18 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.9
+
+- **Fix unreadably small text.** The container has no system fonts, so Pillow
+  silently fell back to its built-in bitmap font, which ignores the requested
+  size. DejaVu Sans Bold and Regular are now bundled in `fonts/` and loaded
+  from there, so the rendered text finally honours the requested size.
+- The screen is now split into as many equally sized bands as there are lines:
+  the title in the top band and every entity value in a band of its own. Two
+  entities therefore produce three equally large lines, each scaled up until
+  the text fills its band.
+- Entity values are uppercased for legibility at the large font size.
+
 ### 1.3.8
 
 - Redesign the live-data screen as three equal bands, one line of text each:

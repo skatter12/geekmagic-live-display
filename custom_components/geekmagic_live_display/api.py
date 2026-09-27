@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import io
+import os
 import re
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime
 
 import aiohttp
 from PIL import Image, ImageColor, ImageDraw, ImageFont
@@ -16,6 +16,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DISPLAY_SIZE, LIVE_IMAGE_NAME, PHOTO_THEME
+
+_FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 
 
 class GeekMagicError(Exception):
@@ -225,11 +227,12 @@ class GeekMagicClient:
 def render_display(
     title: str, message: str, foreground_color: str, background_color: str
 ) -> bytes:
-    """Render the display as three stacked bands.
+    """Render the display as stacked bands of equally sized text.
 
-    The top band shows the title, the middle band the message and the bottom
-    band the current time. Each band gets a third of the screen and its own
-    automatically sized font, so the text always fills its band.
+    The title takes the top band and every non-empty line of the message takes
+    one band of its own, so passing two entities fills the 240x240 screen with
+    three equally large lines. Each line gets its own automatically sized font,
+    scaled up until the text exactly fills its band.
     """
     try:
         foreground = ImageColor.getrgb(foreground_color)
@@ -237,28 +240,22 @@ def render_display(
     except ValueError as err:
         raise GeekMagicError(f"Invalid color: {err}") from err
 
+    lines = [title]
+    lines += [line.strip() for line in message.splitlines() if line.strip()]
+
     image = Image.new("RGB", (DISPLAY_SIZE, DISPLAY_SIZE), background)
     draw = ImageDraw.Draw(image)
-    band_height = DISPLAY_SIZE // 3
+    count = len(lines)
 
-    for index, text in enumerate(
-        (title, _first_line(message), datetime.now().strftime("%H:%M"))
-    ):
-        top = index * band_height
-        font = _fit_font(draw, text, DISPLAY_SIZE - 8, band_height - 8, band_height)
-        _draw_centered(draw, text, top, band_height, font, foreground)
+    for index, text in enumerate(lines):
+        top = index * DISPLAY_SIZE // count
+        bottom = (index + 1) * DISPLAY_SIZE // count
+        font = _fit_font(draw, text, DISPLAY_SIZE - 8, bottom - top - 8, bottom - top)
+        _draw_centered(draw, text, top, bottom - top, font, foreground)
 
     output = io.BytesIO()
     image.save(output, format="JPEG", quality=90, optimize=True)
     return output.getvalue()
-
-
-def _first_line(text: str) -> str:
-    """Return the first non-empty line of a message."""
-    for line in text.splitlines():
-        if line.strip():
-            return line.strip()
-    return ""
 
 
 def _fit_font(
@@ -272,26 +269,33 @@ def _fit_font(
     for size in range(max_size, 5, -1):
         font = _get_font(size)
         bounding_box = draw.textbbox((0, 0), text, font=font)
-        if bounding_box[2] - bounding_box[0] <= max_width and (
-            bounding_box[3] - bounding_box[1]
-        ) <= max_height:
+        if (
+            bounding_box[2] - bounding_box[0] <= max_width
+            and bounding_box[3] - bounding_box[1] <= max_height
+        ):
             return font
     return _get_font(6)
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    """Use a scalable font when Pillow can locate it."""
+    """Load the bundled DejaVu Sans Bold font at the requested size."""
     for candidate in (
+        os.path.join(_FONT_DIR, "DejaVuSans-Bold.ttf"),
+        os.path.join(_FONT_DIR, "DejaVuSans.ttf"),
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/TTF/DejaVuSans.ttf",
-        "DejaVuSans.ttf",
     ):
         try:
             return ImageFont.truetype(candidate, size)
         except OSError:
             continue
-    return ImageFont.load_default()
+
+    # Last resort: Pillow's built-in font, which only honours a size on
+    # Pillow 10.1 and newer.
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        return ImageFont.load_default()
 
 
 def _draw_centered(

@@ -3,7 +3,7 @@
   "name": "GeekMagic Live Display",
   "config_flow": true,
   "documentation": "https://github.com/skatter12/geekmagic-live-display",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "codeowners": [],
   "iot_class": "local_push"
 }
