@@ -6,6 +6,12 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.11
+
+- Only the state itself is uppercased now; the unit keeps its original case.
+  Units such as `kW` or `°C` are case sensitive, so `11 kW` was previously
+  displayed as the incorrect `11 KW`.
+
 ### 1.3.10
 
 - All lines now share a single font size instead of being sized individually,

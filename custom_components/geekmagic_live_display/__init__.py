@@ -79,8 +79,10 @@ def _format_entity_states(hass: HomeAssistant, entity_ids: list[str]) -> str:
     """Format entity states as one bare value per line.
 
     The display renders the title in the top band and every line of this
-    message in a band of its own, so entity names are left out and values are
-    uppercased to stay legible at the large font size the display uses.
+    message in a band of its own, so entity names are left out. Only the state
+    itself is uppercased to stay legible at the large font size the display
+    uses; the unit keeps its original case, because units such as kW or °C are
+    case sensitive.
     """
     lines = []
     for entity_id in entity_ids:
@@ -89,7 +91,7 @@ def _format_entity_states(hass: HomeAssistant, entity_ids: list[str]) -> str:
             lines.append("-")
             continue
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT, "")
-        lines.append(f"{state.state}{unit and f' {unit}'}".upper())
+        lines.append(f"{state.state.upper()}{unit and f' {unit}'}")
     return "\n".join(lines)
 
 
