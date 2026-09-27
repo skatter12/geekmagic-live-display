@@ -6,6 +6,13 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.10
+
+- All lines now share a single font size instead of being sized individually,
+  so the screen looks uniform. The shared size is the largest one that still
+  lets the longest line fit, which means the title sets the size for the
+  entity values below it.
+
 ### 1.3.9
 
 - **Fix unreadably small text.** The container has no system fonts, so Pillow

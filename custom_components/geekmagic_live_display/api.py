@@ -231,8 +231,8 @@ def render_display(
 
     The title takes the top band and every non-empty line of the message takes
     one band of its own, so passing two entities fills the 240x240 screen with
-    three equally large lines. Each line gets its own automatically sized font,
-    scaled up until the text exactly fills its band.
+    three equally large lines. All lines share a single font size: the largest
+    one that still lets the longest line fit, so the screen looks uniform.
     """
     try:
         foreground = ImageColor.getrgb(foreground_color)
@@ -246,11 +246,14 @@ def render_display(
     image = Image.new("RGB", (DISPLAY_SIZE, DISPLAY_SIZE), background)
     draw = ImageDraw.Draw(image)
     count = len(lines)
+    bands = [
+        (index * DISPLAY_SIZE // count, (index + 1) * DISPLAY_SIZE // count)
+        for index in range(count)
+    ]
+    band_height = min(bottom - top for top, bottom in bands)
 
-    for index, text in enumerate(lines):
-        top = index * DISPLAY_SIZE // count
-        bottom = (index + 1) * DISPLAY_SIZE // count
-        font = _fit_font(draw, text, DISPLAY_SIZE - 8, bottom - top - 8, bottom - top)
+    font = _fit_font(draw, lines, DISPLAY_SIZE - 8, band_height - 8, band_height)
+    for text, (top, bottom) in zip(lines, bands):
         _draw_centered(draw, text, top, bottom - top, font, foreground)
 
     output = io.BytesIO()
@@ -260,21 +263,33 @@ def render_display(
 
 def _fit_font(
     draw: ImageDraw.ImageDraw,
-    text: str,
+    lines: list[str],
     max_width: int,
     max_height: int,
     max_size: int,
 ) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    """Return the largest font size where the text fits in the given space."""
+    """Return the largest font size where every line fits in the given space."""
     for size in range(max_size, 5, -1):
         font = _get_font(size)
-        bounding_box = draw.textbbox((0, 0), text, font=font)
-        if (
-            bounding_box[2] - bounding_box[0] <= max_width
-            and bounding_box[3] - bounding_box[1] <= max_height
+        if all(
+            _fits(draw, text, font, max_width, max_height) for text in lines
         ):
             return font
     return _get_font(6)
+
+
+def _fits(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.ImageFont,
+    max_width: int,
+    max_height: int,
+) -> bool:
+    """Return whether the text fits within the given space."""
+    left, upper, right, lower = draw.textbbox((0, 0), text, font=font)
+    return (
+        right - left <= max_width and lower - upper <= max_height
+    )
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
