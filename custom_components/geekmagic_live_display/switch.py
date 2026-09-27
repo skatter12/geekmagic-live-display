@@ -29,6 +29,7 @@ class GeekMagicNightModeSwitch(GeekMagicEntity, SwitchEntity):
     """Represent the SmallTV night mode."""
 
     _attr_name = "Night mode"
+    _attr_icon = "mdi:weather-night"
 
     def __init__(self, entry: ConfigEntry, client: GeekMagicClient) -> None:
         """Initialize the night-mode switch."""
@@ -36,7 +37,13 @@ class GeekMagicNightModeSwitch(GeekMagicEntity, SwitchEntity):
 
     async def async_update(self) -> None:
         """Update the night-mode state."""
-        self._attr_is_on = bool((await self._client.async_get_night_mode())["en"])
+        settings = await self._client.async_get_night_mode()
+        self._attr_is_on = bool(settings["en"])
+        self._attr_extra_state_attributes = {
+            "start_hour": settings["t1"],
+            "end_hour": settings["t2"],
+            "night_brightness": settings["b2"],
+        }
 
     async def async_turn_on(self, **kwargs: object) -> None:
         """Enable night mode."""

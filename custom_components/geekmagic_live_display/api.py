@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import re
 import textwrap
 
 import aiohttp
@@ -107,6 +108,22 @@ class GeekMagicClient:
             i_i=settings["i_i"] if interval is None else interval,
         )
 
+    async def async_get_files(self, directory: str) -> list[str]:
+        """Return the files available in a display directory."""
+        response = await self._async_get_text("/filelist", params={"dir": directory})
+        return [
+            file_path.replace("//", "/")
+            for file_path in re.findall(r"<a href='([^']+)'>", response)
+        ]
+
+    async def async_set_image(self, file_path: str) -> None:
+        """Select a full-screen photo-album image."""
+        await self._async_set(img=file_path)
+
+    async def async_set_small_image(self, file_path: str) -> None:
+        """Select the small image shown by the weather themes."""
+        await self._async_set(gif=file_path)
+
     async def _async_get_json(self, path: str) -> dict[str, str]:
         """Request JSON from the display."""
         try:
@@ -135,6 +152,20 @@ class GeekMagicClient:
                     f"{self._base_url}{path}", params=params
                 ) as response:
                     response.raise_for_status()
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            raise GeekMagicError(str(err)) from err
+
+    async def _async_get_text(
+        self, path: str, *, params: dict[str, str | int]
+    ) -> str:
+        """Request text from the display."""
+        try:
+            async with asyncio.timeout(10):
+                async with self._session.get(
+                    f"{self._base_url}{path}", params=params
+                ) as response:
+                    response.raise_for_status()
+                    return await response.text()
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
             raise GeekMagicError(str(err)) from err
 

@@ -10,6 +10,8 @@ states from any Home Assistant entity as a 240×240 image.
   album, clock styles, and simple weather clock.
 - Control brightness, night mode, night-mode schedule, and night brightness.
 - Control photo-album autoplay and image interval.
+- Select full-screen images from the `/image/` folder and small weather-theme
+  images from the `/gif/` folder.
 - Monitor remaining SmallTV storage with a diagnostic free-space sensor.
 - Reboot the display from Home Assistant.
 - Render custom text with `geekmagic_live_display.show`.
@@ -68,3 +70,11 @@ data:
 Call `geekmagic_live_display.stop_watching` to stop automatic updates. Starting
 a new `show`, `show_entities`, or `watch_entities` service call replaces the
 previous watcher for that display.
+
+## Night mode
+
+Night mode does not switch the display off. When it is enabled, the SmallTV
+automatically lowers its brightness to **Night mode brightness** between
+**Night mode start hour** and **Night mode end hour**. The Night mode entity
+also exposes the currently configured start hour, end hour, and brightness as
+attributes.
