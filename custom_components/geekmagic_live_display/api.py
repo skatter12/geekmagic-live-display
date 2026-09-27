@@ -32,6 +32,31 @@ def _fetch_text(url: str) -> str:
         return response.read().decode("utf-8", errors="replace")
 
 
+def _post_image(url: str, filename: str, image: bytes, params: dict[str, str]) -> None:
+    """Upload an image to the display, tolerating its malformed headers.
+
+    Blocking urllib is used because the display's /doUpload endpoint sends a
+    duplicated Content-Length header, which aiohttp rejects.
+    """
+    boundary = "----geekmagicboundary"
+    body = io.BytesIO()
+    body.write(f"--{boundary}\r\n".encode())
+    body.write(
+        f"Content-Disposition: form-data; name=\"image\"; "
+        f"filename=\"{filename}\"\r\n".encode()
+    )
+    body.write(b"Content-Type: image/jpeg\r\n\r\n")
+    body.write(image)
+    body.write(f"\r\n--{boundary}--\r\n".encode())
+    query = urllib.parse.urlencode(params)
+    request = urllib.request.Request(
+        f"{url}?{query}", data=body.getvalue(), method="POST"
+    )
+    request.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
+    with urllib.request.urlopen(request, timeout=30) as response:
+        response.read()
+
+
 class GeekMagicClient:
     """Communicate with a GeekMagic SmallTV-Ultra."""
 
@@ -49,14 +74,15 @@ class GeekMagicClient:
         """Upload an image and make it the active photo-album image."""
         await self._async_get("/set", params={"theme": PHOTO_THEME})
 
-        data = aiohttp.FormData()
-        data.add_field(
-            "image",
+        # The display sends a duplicated Content-Length header on /doUpload,
+        # which aiohttp rejects. urllib tolerates it, so upload in a worker.
+        await self._hass.async_add_executor_job(
+            _post_image,
+            f"{self._base_url}/doUpload",
+            LIVE_IMAGE_NAME,
             image,
-            filename=LIVE_IMAGE_NAME,
-            content_type="image/jpeg",
+            {"dir": "/image/"},
         )
-        await self._async_post("/doUpload", params={"dir": "/image/"}, data=data)
         await self._async_get("/set", params={"img": LIVE_IMAGE_NAME})
 
     async def async_get_theme(self) -> str:
@@ -166,8 +192,14 @@ class GeekMagicClient:
                     f"{self._base_url}{path}", params=params
                 ) as response:
                     response.raise_for_status()
-        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
-            raise GeekMagicError(str(err)) from err
+        except (asyncio.TimeoutError, aiohttp.ClientError):
+            # The display can send a duplicated Content-Length header, which
+            # aiohttp rejects. Retry with urllib, which tolerates it.
+            url = f"{self._base_url}{path}?{urllib.parse.urlencode(params)}"
+            try:
+                await self._hass.async_add_executor_job(_fetch_text, url)
+            except (TimeoutError, urllib.error.URLError) as err:
+                raise GeekMagicError(str(err)) from err
 
     async def _async_get_text(
         self, path: str, *, params: dict[str, str | int]
@@ -188,19 +220,6 @@ class GeekMagicClient:
                 return await self._hass.async_add_executor_job(_fetch_text, url)
             except (TimeoutError, urllib.error.URLError) as err:
                 raise GeekMagicError(str(err)) from err
-
-    async def _async_post(
-        self, path: str, *, params: dict[str, str | int], data: aiohttp.FormData
-    ) -> None:
-        """Upload content to the display."""
-        try:
-            async with asyncio.timeout(30):
-                async with self._session.post(
-                    f"{self._base_url}{path}", params=params, data=data
-                ) as response:
-                    response.raise_for_status()
-        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
-            raise GeekMagicError(str(err)) from err
 
 
 def render_display(

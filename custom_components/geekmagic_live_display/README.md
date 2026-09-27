@@ -6,6 +6,13 @@ states from any Home Assistant entity as a 240×240 image.
 
 ## Changelog
 
+### 1.3.4
+
+- Fix the live-data services (`show`, `show_entities`, `watch_entities`)
+  failing with "Duplicate Content-Length". The display sends the same
+  duplicated header on `/doUpload` as it does on `/filelist`, so the image
+  upload now also falls back to `urllib`.
+
 ### 1.3.3
 
 - Add **Night mode start** and **Night mode end** time selectors so the
